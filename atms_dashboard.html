@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ATMS — Live Traffic Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#03080d;--sur:#071018;--brd:#0e2030;--brd2:#143040;
+  --cy:#00e5ff;--gr:#00ff88;--rd:#ff1744;--yw:#ffd600;--or:#ff6d00;
+  --wh:#e8f4f8;--dim:#3a6070;--dim2:#5a8090;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--wh);display:flex;flex-direction:column;}
+
+/* scanlines – cheap, single pseudo-element */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
+  background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);}
+
+/* ── HEADER ── */
+#hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px;border-bottom:1px solid var(--brd);
+  background:rgba(7,16,24,0.98);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.lhex{width:36px;height:36px;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  background:rgba(0,229,255,0.08);border:1px solid var(--cy);display:flex;align-items:center;justify-content:center;
+  font-size:15px;animation:hpulse 3s ease-in-out infinite;}
+@keyframes hpulse{0%,100%{box-shadow:0 0 6px rgba(0,229,255,0.15);}50%{box-shadow:0 0 18px rgba(0,229,255,0.4);}}
+.ltitle{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;letter-spacing:4px;color:var(--cy);}
+.lsub{font-size:8px;letter-spacing:3px;color:var(--dim2);margin-top:1px;}
+.hctr{display:flex;gap:20px;align-items:center;}
+.hs{text-align:center;}
+.hsv{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--cy);}
+.hsl{font-size:8px;letter-spacing:2px;color:var(--dim);margin-top:1px;}
+.hright{display:flex;align-items:center;gap:16px;}
+.syss{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:2px;color:var(--gr);}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--gr);box-shadow:0 0 7px var(--gr);animation:blk 1.4s ease-in-out infinite;}
+@keyframes blk{0%,100%{opacity:1;}50%{opacity:0.15;}}
+#clk{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cy);letter-spacing:3px;}
+
+/* ── LAYOUT ── */
+#main{display:flex;flex:1;overflow:hidden;}
+#lpanel{width:224px;flex-shrink:0;border-right:1px solid var(--brd);background:var(--sur);overflow-y:auto;display:flex;flex-direction:column;}
+#lpanel::-webkit-scrollbar{width:2px;}
+#lpanel::-webkit-scrollbar-thumb{background:var(--brd2);}
+#ctr{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#iw{flex:1;position:relative;overflow:hidden;}
+#ic{width:100%;height:100%;display:block;}
+#bstrip{height:120px;flex-shrink:0;border-top:1px solid var(--brd);display:flex;}
+#rpanel{width:252px;flex-shrink:0;border-left:1px solid var(--brd);background:var(--sur);display:flex;flex-direction:column;}
+
+/* ── SECTIONS ── */
+.sec{border-bottom:1px solid var(--brd);padding:12px;}
+.stitle{font-size:8px;letter-spacing:3px;color:var(--dim2);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.stitle::before{content:'▸';color:var(--cy);}
+
+/* ── TRAFFIC LIGHT ── */
+.tlw{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px;}
+.tlh{background:#040c12;border:2px solid #0c1b27;border-radius:18px;padding:9px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:9px;flex-shrink:0;}
+.bulb{width:34px;height:34px;border-radius:50%;transition:all 0.35s ease;will-change:box-shadow,background;}
+.r-off{background:rgba(255,23,68,0.05);}
+.y-off{background:rgba(255,214,0,0.05);}
+.g-off{background:rgba(0,255,136,0.05);}
+.r-on{background:var(--rd);box-shadow:0 0 16px var(--rd),0 0 40px rgba(255,23,68,0.35);}
+.y-on{background:var(--yw);box-shadow:0 0 16px var(--yw),0 0 40px rgba(255,214,0,0.35);}
+.g-on{background:var(--gr);box-shadow:0 0 16px var(--gr),0 0 40px rgba(0,255,136,0.35);}
+.tlinfo{flex:1;}
+.tlph{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;transition:color 0.3s;}
+.tlbar{height:3px;background:var(--brd2);border-radius:2px;overflow:hidden;margin:6px 0;}
+.tlfl{height:100%;border-radius:2px;transition:width 0.95s linear,background 0.3s;}
+.tlct{font-size:26px;font-family:'Orbitron',sans-serif;font-weight:900;}
+.tlsec{font-size:10px;color:var(--dim2);letter-spacing:2px;}
+
+/* Current green direction badge */
+#green-dir{margin-top:6px;padding:5px 8px;background:#040c12;border:1px solid var(--brd2);
+  font-size:9px;letter-spacing:2px;color:var(--dim2);display:flex;align-items:center;gap:6px;}
+#green-dir .gdd{font-size:11px;color:var(--gr);}
+
+/* ── BUTTONS ── */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;}
+.mb{background:transparent;border:1px solid var(--brd2);color:var(--dim2);
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+  padding:7px 4px;cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
+.mb:hover{border-color:var(--cy);color:var(--cy);background:rgba(0,229,255,0.04);}
+.mb.ar.active{border-color:var(--rd);color:var(--rd);background:rgba(255,23,68,0.07);}
+.mb.ay.active{border-color:var(--yw);color:var(--yw);background:rgba(255,214,0,0.07);}
+.mb.ag.active{border-color:var(--gr);color:var(--gr);background:rgba(0,255,136,0.07);}
+.mb.aa.active{border-color:var(--cy);color:var(--cy);background:rgba(0,229,255,0.07);}
+.mb:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* ── SLIDERS ── */
+.drow{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.dlbl{font-size:8px;letter-spacing:1px;width:12px;text-align:center;}
+.dlbl.r{color:var(--rd);}.dlbl.y{color:var(--yw);}.dlbl.g{color:var(--gr);}
+.dsl{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;outline:none;cursor:pointer;}
+.dsl.rs{background:linear-gradient(90deg,var(--rd) var(--p,60%),var(--brd2) var(--p,60%));}
+.dsl.ys{background:linear-gradient(90deg,var(--yw) var(--p,6%),var(--brd2) var(--p,6%));}
+.dsl.gs{background:linear-gradient(90deg,var(--gr) var(--p,40%),var(--brd2) var(--p,40%));}
+.dsl::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;cursor:pointer;}
+.dsl.rs::-webkit-slider-thumb{background:var(--rd);box-shadow:0 0 5px var(--rd);}
+.dsl.ys::-webkit-slider-thumb{background:var(--yw);box-shadow:0 0 5px var(--yw);}
+.dsl.gs::-webkit-slider-thumb{background:var(--gr);box-shadow:0 0 5px var(--gr);}
+.dv{font-size:9px;color:var(--dim2);width:22px;text-align:right;}
+
+/* ── STAT GRID ── */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.sbox{background:#040c12;border:1px solid var(--brd);padding:9px;}
+.snum{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;line-height:1;}
+.slbl{font-size:7px;letter-spacing:2px;color:var(--dim);margin-top:3px;text-transform:uppercase;}
+
+/* ── PER-SIGNAL STATUS ── */
+.sigrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.signame{font-size:9px;letter-spacing:2px;color:var(--dim2);}
+.sigbadge{font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;}
+.sigbadge.red{color:var(--rd);border:1px solid rgba(255,23,68,0.3);background:rgba(255,23,68,0.05);}
+.sigbadge.green{color:var(--gr);border:1px solid rgba(0,255,136,0.3);background:rgba(0,255,136,0.05);}
+.sigbadge.yellow{color:var(--yw);border:1px solid rgba(255,214,0,0.3);background:rgba(255,214,0,0.05);}
+
+/* ── RF ── */
+#rfc{width:100%;height:64px;display:block;background:#040c12;border:1px solid var(--brd);margin-bottom:7px;}
+.rfrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.rffreq{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--or);}
+.rfu{font-size:8px;color:var(--dim);}
+.detb{display:flex;align-items:center;gap:6px;padding:6px 9px;background:#040c12;
+  border:1px solid var(--brd);font-size:8px;letter-spacing:2px;color:var(--dim2);transition:all 0.3s;}
+.detb.on{border-color:var(--or);color:var(--or);background:rgba(255,109,0,0.06);box-shadow:0 0 10px rgba(255,109,0,0.12);}
+.detb .dd{width:6px;height:6px;border-radius:50%;background:var(--dim);transition:all 0.3s;flex-shrink:0;}
+.detb.on .dd{background:var(--or);box-shadow:0 0 7px var(--or);animation:blk 0.7s ease-in-out infinite;}
+.simbtn{width:100%;margin-top:7px;padding:9px;background:transparent;border:1px solid var(--or);
+  color:var(--or);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;cursor:pointer;
+  transition:all 0.15s;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);}
+.simbtn:hover{background:rgba(255,109,0,0.08);}
+.simbtn:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* ── LOG ── */
+#llog{flex:1;overflow-y:auto;padding:7px;display:flex;flex-direction:column;gap:3px;}
+#llog::-webkit-scrollbar{width:2px;}
+#llog::-webkit-scrollbar-thumb{background:var(--brd2);}
+.li{font-size:8px;letter-spacing:1px;padding:4px 7px;border-left:2px solid var(--brd);
+  background:#040c12;animation:sIn 0.2s ease;display:flex;gap:7px;}
+@keyframes sIn{from{opacity:0;transform:translateX(5px);}to{opacity:1;transform:none;}}
+.li.info{border-color:var(--cy);}
+.li.ok{border-color:var(--gr);}
+.li.warn{border-color:var(--yw);}
+.li.alert{border-color:var(--or);color:var(--or);}
+.lt{color:var(--dim);flex-shrink:0;}
+
+/* ── BOTTOM CHARTS ── */
+.bpanel{flex:1;border-right:1px solid var(--brd);padding:7px 10px;display:flex;flex-direction:column;}
+.bpanel:last-child{border-right:none;}
+.btitle{font-size:7px;letter-spacing:3px;color:var(--dim2);margin-bottom:5px;text-transform:uppercase;}
+.bcvs{flex:1;width:100%;display:block;}
+
+/* ── OVERRIDE BANNER ── */
+#obanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  padding:6px 20px;background:rgba(255,109,0,0.12);border:1px solid var(--or);
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--or);
+  display:none;z-index:20;white-space:nowrap;
+  animation:bp 0.9s ease-in-out infinite;}
+@keyframes bp{0%,100%{box-shadow:0 0 8px rgba(255,109,0,0.15);}50%{box-shadow:0 0 22px rgba(255,109,0,0.45);}}
+
+/* ── QUEUE BARS ── */
+.qbar-wrap{margin-bottom:7px;}
+.qbar-top{display:flex;justify-content:space-between;font-size:7px;letter-spacing:2px;color:var(--dim);margin-bottom:3px;}
+.qbar-bg{height:3px;background:var(--brd2);border-radius:2px;overflow:hidden;}
+.qbar-fill{height:100%;border-radius:2px;transition:width 0.4s ease;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="logo">
+    <div class="lhex">🚦</div>
+    <div><div class="ltitle">ATMS</div><div class="lsub">AUTOMATED TRAFFIC MANAGEMENT SYSTEM</div></div>
+  </div>
+  <div class="hctr">
+    <div class="hs"><div class="hsv" id="hv">0</div><div class="hsl">VEHICLES/HR</div></div>
+    <div class="hs"><div class="hsv" id="hw">0s</div><div class="hsl">AVG WAIT</div></div>
+    <div class="hs"><div class="hsv" id="hc">0</div><div class="hsl">CYCLES</div></div>
+    <div class="hs"><div class="hsv" id="hcl">0</div><div class="hsl">CLEARED</div></div>
+  </div>
+  <div class="hright">
+    <div class="syss"><div class="ldot"></div>SYSTEM LIVE</div>
+    <div id="clk">00:00:00</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT PANEL -->
+  <div id="lpanel">
+
+    <!-- Active signal display (single light shown = active phase) -->
+    <div class="sec">
+      <div class="stitle">Active Signal Phase</div>
+      <div class="tlw">
+        <div class="tlh">
+          <div class="bulb r-off" id="br"></div>
+          <div class="bulb y-off" id="by"></div>
+          <div class="bulb g-off" id="bg"></div>
+        </div>
+        <div class="tlinfo">
+          <div class="tlph" id="tlph" style="color:var(--rd)">RED</div>
+          <div class="tlbar"><div class="tlfl" id="tlfl" style="width:100%;background:var(--rd)"></div></div>
+          <div class="tlct" id="tlct" style="color:var(--rd)">30</div>
+          <div class="tlsec">SECONDS LEFT</div>
+        </div>
+      </div>
+      <div id="green-dir"><span class="gdd">↑</span><span id="gdtxt">N/S APPROACH — GREEN</span></div>
+    </div>
+
+    <!-- Per-signal status (all 4) -->
+    <div class="sec">
+      <div class="stitle">All Signal States</div>
+      <div class="sigrow"><span class="signame">N (NORTHBOUND)</span><span class="sigbadge red" id="sig-N">RED</span></div>
+      <div class="sigrow"><span class="signame">S (SOUTHBOUND)</span><span class="sigbadge red" id="sig-S">RED</span></div>
+      <div class="sigrow"><span class="signame">E (EASTBOUND)</span><span class="sigbadge red" id="sig-E">RED</span></div>
+      <div class="sigrow"><span class="signame">W (WESTBOUND)</span><span class="sigbadge red" id="sig-W">RED</span></div>
+    </div>
+
+    <!-- Manual override -->
+    <div class="sec">
+      <div class="stitle">Manual Override</div>
+      <div class="mgrid">
+        <button class="mb aa active" id="btn-auto" onclick="setMode('auto')">AUTO</button>
+        <button class="mb ar" id="btn-NS" onclick="setMode('NS')">N/S GREEN</button>
+        <button class="mb ag" id="btn-EW" onclick="setMode('EW')">E/W GREEN</button>
+        <button class="mb ay" id="btn-all-red" onclick="setMode('allred')">ALL RED</button>
+      </div>
+    </div>
+
+    <!-- Duration sliders -->
+    <div class="sec">
+      <div class="stitle">Phase Duration (sec)</div>
+      <div class="drow">
+        <span class="dlbl r">R</span>
+        <input type="range" class="dsl rs" id="sl-r" min="5" max="60" value="30" oninput="setDur('red',this.value)">
+        <span class="dv" id="dv-r">30</span>
+      </div>
+      <div class="drow">
+        <span class="dlbl y">Y</span>
+        <input type="range" class="dsl ys" id="sl-y" min="2" max="10" value="3" oninput="setDur('yellow',this.value)">
+        <span class="dv" id="dv-y">3</span>
+      </div>
+      <div class="drow">
+        <span class="dlbl g">G</span>
+        <input type="range" class="dsl gs" id="sl-g" min="5" max="60" value="20" oninput="setDur('green',this.value)">
+        <span class="dv" id="dv-g">20</span>
+      </div>
+    </div>
+
+    <!-- Live counters -->
+    <div class="sec">
+      <div class="stitle">Live Counters</div>
+      <div class="sgrid">
+        <div class="sbox"><div class="snum" id="sc-tot" style="color:var(--cy)">0</div><div class="slbl">Total</div></div>
+        <div class="sbox"><div class="snum" id="sc-wait" style="color:var(--rd)">0</div><div class="slbl">Waiting</div></div>
+        <div class="sbox"><div class="snum" id="sc-move" style="color:var(--gr)">0</div><div class="slbl">Moving</div></div>
+        <div class="sbox"><div class="snum" id="sc-emg" style="color:var(--or)">0</div><div class="slbl">Emergency</div></div>
+      </div>
+    </div>
+
+    <!-- Queue bars -->
+    <div class="sec" style="flex:1;border-bottom:none;">
+      <div class="stitle">Queue Length</div>
+      <div id="qbars"></div>
+    </div>
+
+  </div>
+
+  <!-- CENTER CANVAS -->
+  <div id="ctr">
+    <div id="iw">
+      <canvas id="ic"></canvas>
+      <div id="obanner">⚠ EMERGENCY OVERRIDE ACTIVE</div>
+    </div>
+    <div id="bstrip">
+      <div class="bpanel"><div class="btitle">// VEHICLE COUNT</div><canvas class="bcvs" id="cv1"></canvas></div>
+      <div class="bpanel"><div class="btitle">// AVG WAIT (sec)</div><canvas class="bcvs" id="cv2"></canvas></div>
+      <div class="bpanel"><div class="btitle">// CARS CLEARED</div><canvas class="bcvs" id="cv3"></canvas></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="rpanel">
+    <div class="sec">
+      <div class="stitle">RF Receiver — 434 MHz</div>
+      <canvas id="rfc"></canvas>
+      <div class="rfrow">
+        <div><div class="rffreq">434.000 <span class="rfu">MHz</span></div>
+          <div style="font-size:7px;color:var(--dim);letter-spacing:2px;margin-top:1px">THRESHOLD: 10 dB</div></div>
+        <div style="text-align:right">
+          <div style="font-size:8px;color:var(--dim2)" id="rfpsd">-∞ dB</div>
+          <div style="font-size:7px;color:var(--dim);letter-spacing:1px">SIGNAL PWR</div>
+        </div>
+      </div>
+      <div class="detb" id="detb"><div class="dd"></div><span id="dettxt">NO SIGNAL AT 434 MHz</span></div>
+      <button class="simbtn" id="simbtn" onclick="triggerAmb()">SIMULATE AMBULANCE</button>
+    </div>
+    <div class="sec" style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-bottom:none;">
+      <div class="stitle">Event Log</div>
+      <div id="llog"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+// CONSTANTS & STATE
+// ═══════════════════════════════════════════════════
+const cvs = document.getElementById('ic');
+const ctx = cvs.getContext('2d', { alpha: false });
+ctx.imageSmoothingEnabled = false;
+
+const MAX_CARS = 24;          // hard cap for perf
+const SPAWN_INTERVAL = 90;    // frames between spawns
+const HIST = 70;
+
+// Signal phases: NS = N and S are green, EW = E and W are green
+// Sequence: NS_green → NS_yellow → EW_green → EW_yellow → repeat
+const PHASE_SEQ = ['NS_green','NS_yellow','EW_green','EW_yellow'];
+const DUR = { red: 30, yellow: 3, green: 20 };
+
+let phaseIdx = 0;
+let phase = 'NS_green';  // current phase name
+let countdown = DUR.green;
+let maxDur    = DUR.green;
+let autoMode  = true;
+let emgActive = false;
+let emgTimeout = null;
+let emgDir = null;           // which direction has the ambulance
+let cycleCount = 0;
+let totalCleared = 0;
+let totalEmg = 0;
+let frame = 0;
+let spawnTick = 0;
+
+// Road geometry (set in resize)
+let RD = {};
+
+// ─── Signal state per direction ───────────────────
+// Returns whether a given direction has GREEN signal right now
+function dirIsGreen(dir) {
+  if (emgActive) return dir === emgDir;   // only ambulance direction
+  if (phase === 'NS_green')   return dir === 'N' || dir === 'S';
+  if (phase === 'EW_green')   return dir === 'E' || dir === 'W';
+  return false; // yellow or transitioning = all red
+}
+
+function phaseColor(dir) {
+  if (emgActive) return dir === emgDir ? 'green' : 'red';
+  if (phase === 'NS_green')  return (dir==='N'||dir==='S') ? 'green' : 'red';
+  if (phase === 'NS_yellow') return (dir==='N'||dir==='S') ? 'yellow' : 'red';
+  if (phase === 'EW_green')  return (dir==='E'||dir==='W') ? 'green' : 'red';
+  if (phase === 'EW_yellow') return (dir==='E'||dir==='W') ? 'yellow' : 'red';
+  return 'red';
+}
+
+// ═══════════════════════════════════════════════════
+// GEOMETRY
+// ═══════════════════════════════════════════════════
+function resize() {
+  const wrap = document.getElementById('iw');
+  cvs.width  = wrap.clientWidth;
+  cvs.height = wrap.clientHeight;
+  const W = cvs.width, H = cvs.height;
+  const cx = W/2, cy = H/2;
+  const rw = Math.round(Math.min(W,H) * 0.16); // road width
+  // Single lane center for each direction (one lane each way)
+  // N travels upward on the RIGHT side of vertical road  → x = cx + rw/4
+  // S travels downward on the LEFT side               → x = cx - rw/4
+  // E travels rightward on the BOTTOM of horizontal road → y = cy + rw/4
+  // W travels leftward on the TOP                    → y = cy - rw/4
+  RD = { W, H, cx, cy, rw,
+    lane: {
+      N: { x: cx + rw*0.25 },
+      S: { x: cx - rw*0.25 },
+      E: { y: cy + rw*0.25 },
+      W: { y: cy - rw*0.25 },
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// CARS
+// ═══════════════════════════════════════════════════
+let cars = [];
+let carId = 0;
+const PALETTE = ['#3af','#f55','#5fb','#fc4','#f8a','#8df','#afa','#fa8'];
+
+function spawnCar(dir, isEmg) {
+  if (!isEmg && cars.length >= MAX_CARS) return;
+  const { W, H, cx, cy, rw, lane } = RD;
+  const spd = 1.5 + Math.random() * 0.7;
+  let x, y, vx, vy, ang;
+
+  if      (dir==='N') { x=lane.N.x; y=H+20; vx=0; vy=-spd; ang=0; }
+  else if (dir==='S') { x=lane.S.x; y=-20;  vx=0; vy= spd; ang=Math.PI; }
+  else if (dir==='E') { x=-20; y=lane.E.y; vx= spd; vy=0; ang=Math.PI/2; }
+  else                { x=W+20; y=lane.W.y; vx=-spd; vy=0; ang=-Math.PI/2; }
+
+  cars.push({
+    id: carId++, dir, x, y, vx, vy, ang,
+    bvx: vx, bvy: vy, spd,
+    color: isEmg ? '#fff' : PALETTE[Math.floor(Math.random()*PALETTE.length)],
+    isEmg: !!isEmg,
+    waiting: false, passed: false, gone: false,
+    waitTicks: 0,
+  });
+}
+
+// Stop line distance from center edge (cars stop here)
+const STOP_MARGIN = 26;
+function stopLine(dir) {
+  const { cx, cy, rw } = RD;
+  if (dir==='N') return cy + rw/2 + STOP_MARGIN;
+  if (dir==='S') return cy - rw/2 - STOP_MARGIN;
+  if (dir==='E') return cx - rw/2 - STOP_MARGIN;
+  if (dir==='W') return cx + rw/2 + STOP_MARGIN;
+}
+function atStop(c) {
+  const sl = stopLine(c.dir);
+  const tol = 40;
+  if (c.dir==='N') return c.y <= sl+tol && c.y > sl-4;
+  if (c.dir==='S') return c.y >= sl-tol && c.y < sl+4;
+  if (c.dir==='E') return c.x >= sl-tol && c.x < sl+4;
+  if (c.dir==='W') return c.x <= sl+tol && c.x > sl-4;
+  return false;
+}
+function pastStop(c) {
+  const sl = stopLine(c.dir);
+  if (c.dir==='N') return c.y < sl;
+  if (c.dir==='S') return c.y > sl;
+  if (c.dir==='E') return c.x > sl;
+  if (c.dir==='W') return c.x < sl;
+  return false;
+}
+function oob(c) {
+  return c.x < -80 || c.x > RD.W+80 || c.y < -80 || c.y > RD.H+80;
+}
+
+// Simple car-following: is there a stopped/slow car within gap?
+function blockedAhead(c, idx) {
+  const GAP = 34;
+  for (let j = 0; j < cars.length; j++) {
+    if (j===idx || cars[j].gone || cars[j].dir!==c.dir) continue;
+    const o = cars[j];
+    const dist = c.dir==='N' ? c.y - o.y :
+                 c.dir==='S' ? o.y - c.y :
+                 c.dir==='E' ? o.x - c.x :
+                               c.x - o.x;
+    if (dist > 0 && dist < GAP && (o.waiting || o.vx===0 && o.vy===0)) return true;
+  }
+  return false;
+}
+
+function updateCars() {
+  // Spawn
+  spawnTick++;
+  if (spawnTick >= SPAWN_INTERVAL) {
+    spawnTick = 0;
+    const dirs = ['N','S','E','W'];
+    spawnCar(dirs[Math.floor(Math.random()*4)], false);
+    if (Math.random() < 0.3) spawnCar(dirs[Math.floor(Math.random()*4)], false);
+  }
+
+  let wt=0, mv=0;
+  const qN=[], qS=[], qE=[], qW=[];
+
+  for (let i = cars.length-1; i >= 0; i--) {
+    const c = cars[i];
+    if (c.gone) { cars.splice(i,1); continue; }
+    if (oob(c)) { c.gone=true; totalCleared++; continue; }
+    if (pastStop(c)) c.passed = true;
+
+    const green = dirIsGreen(c.dir);
+    const mustStop = !green && !c.passed && atStop(c);
+    const jammed   = blockedAhead(c, i);
+
+    if (mustStop || jammed) {
+      c.vx = 0; c.vy = 0; c.waiting = true; c.waitTicks++;
+      wt++;
+      if (c.dir==='N') qN.push(1);
+      if (c.dir==='S') qS.push(1);
+      if (c.dir==='E') qE.push(1);
+      if (c.dir==='W') qW.push(1);
+    } else {
+      c.vx = c.bvx; c.vy = c.bvy; c.waiting = false; mv++;
+    }
+    c.x += c.vx; c.y += c.vy;
+  }
+
+  // DOM updates
+  document.getElementById('sc-tot').textContent  = cars.length;
+  document.getElementById('sc-wait').textContent = wt;
+  document.getElementById('sc-move').textContent = mv;
+
+  // Queue bars
+  const qdata = [['N',qN.length,'#00e5ff'],['S',qS.length,'#00ff88'],
+                  ['E',qE.length,'#ffd600'],['W',qW.length,'#ff1744']];
+  let h='';
+  qdata.forEach(([d,v,col])=>{
+    const p=Math.min(v/5*100,100);
+    h+=`<div class="qbar-wrap">
+      <div class="qbar-top"><span>${d} APPROACH</span><span style="color:var(--wh)">${v}</span></div>
+      <div class="qbar-bg"><div class="qbar-fill" style="width:${p}%;background:${col};box-shadow:0 0 5px ${col}"></div></div>
+    </div>`;
+  });
+  document.getElementById('qbars').innerHTML = h;
+
+  return wt;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER  (optimised – minimal shadow, dirty-flag glow)
+// ═══════════════════════════════════════════════════
+// Pre-build static road once into offscreen canvas
+let roadCanvas = null;
+let roadDirty  = true;
+
+function buildRoad() {
+  const { W, H, cx, cy, rw, lane } = RD;
+  roadCanvas = document.createElement('canvas');
+  roadCanvas.width = W; roadCanvas.height = H;
+  const rc = roadCanvas.getContext('2d', { alpha: false });
+
+  // BG
+  rc.fillStyle = '#030a10';
+  rc.fillRect(0, 0, W, H);
+
+  // Grid (draw once)
+  rc.strokeStyle = 'rgba(0,229,255,0.02)';
+  rc.lineWidth = 1;
+  for (let x=0; x<W; x+=40){ rc.beginPath(); rc.moveTo(x,0); rc.lineTo(x,H); rc.stroke(); }
+  for (let y=0; y<H; y+=40){ rc.beginPath(); rc.moveTo(0,y); rc.lineTo(W,y); rc.stroke(); }
+
+  // Road surfaces
+  rc.fillStyle = '#0d1e2a';
+  rc.fillRect(0, cy-rw/2, W, rw);   // horizontal
+  rc.fillRect(cx-rw/2, 0, rw, H);   // vertical
+
+  // Intersection fill
+  rc.fillStyle = '#101e2c';
+  rc.fillRect(cx-rw/2, cy-rw/2, rw, rw);
+
+  // Road edge lines
+  rc.strokeStyle = 'rgba(0,229,255,0.06)';
+  rc.lineWidth = 1;
+  [ [0,cy-rw/2,W,cy-rw/2],[0,cy+rw/2,W,cy+rw/2],
+    [cx-rw/2,0,cx-rw/2,H],[cx+rw/2,0,cx+rw/2,H] ].forEach(([x1,y1,x2,y2])=>{
+    rc.beginPath(); rc.moveTo(x1,y1); rc.lineTo(x2,y2); rc.stroke();
+  });
+
+  // Centre lane dividers (dashed)
+  rc.setLineDash([10,12]);
+  rc.strokeStyle = 'rgba(255,255,255,0.04)';
+  rc.lineWidth = 1;
+  // Horizontal road centre
+  rc.beginPath(); rc.moveTo(0,cy); rc.lineTo(cx-rw/2,cy); rc.stroke();
+  rc.beginPath(); rc.moveTo(cx+rw/2,cy); rc.lineTo(W,cy); rc.stroke();
+  // Vertical road centre
+  rc.beginPath(); rc.moveTo(cx,0); rc.lineTo(cx,cy-rw/2); rc.stroke();
+  rc.beginPath(); rc.moveTo(cx,cy+rw/2); rc.lineTo(cx,H); rc.stroke();
+  rc.setLineDash([]);
+
+  // Lane markers showing direction arrows (faint)
+  rc.fillStyle = 'rgba(0,229,255,0.07)';
+  rc.font = 'bold 14px sans-serif';
+  rc.textAlign = 'center'; rc.textBaseline = 'middle';
+  rc.fillText('↑', lane.N.x, cy+rw*0.75);
+  rc.fillText('↓', lane.S.x, cy-rw*0.75);
+  rc.fillText('→', cx-rw*0.75, lane.E.y);
+  rc.fillText('←', cx+rw*0.75, lane.W.y);
+
+  // Compass labels
+  rc.fillStyle = 'rgba(90,128,144,0.5)';
+  rc.font = 'bold 10px Share Tech Mono';
+  rc.fillText('N', lane.N.x, 14);
+  rc.fillText('S', lane.S.x, H-6);
+  rc.fillText('E', W-8,  lane.E.y);
+  rc.fillText('W', 8,    lane.W.y);
+
+  roadDirty = false;
+}
+
+function render() {
+  if (!roadCanvas || roadDirty) buildRoad();
+  const { W, H, cx, cy, rw } = RD;
+
+  // Blit static road
+  ctx.drawImage(roadCanvas, 0, 0);
+
+  // Stop lines (dynamic colour by signal state)
+  drawStopLines();
+
+  // Mini signal heads at intersection corners
+  drawMiniSignal(cx + rw/2 + 7, cy - rw/2 - 7, 'N');
+  drawMiniSignal(cx - rw/2 - 7, cy + rw/2 + 7, 'S');
+  drawMiniSignal(cx + rw/2 + 7, cy + rw/2 + 7, 'E');
+  drawMiniSignal(cx - rw/2 - 7, cy - rw/2 - 7, 'W');
+
+  // Cars (sorted by y for basic depth)
+  cars.sort((a,b)=>a.y-b.y);
+  for (const c of cars) drawCar(c);
+}
+
+function drawStopLines() {
+  const { cx, cy, rw, lane } = RD;
+  const colorOf = dir => {
+    const st = phaseColor(dir);
+    return st==='green'?'rgba(0,255,136,0.7)':st==='yellow'?'rgba(255,214,0,0.7)':'rgba(255,23,68,0.6)';
+  };
+  const sl = STOP_MARGIN;
+  ctx.lineWidth = 2;
+  // N stop line (cars coming from south going north, stop at bottom of intersection)
+  ctx.strokeStyle = colorOf('N');
+  ctx.beginPath(); ctx.moveTo(cx, cy+rw/2+sl); ctx.lineTo(cx+rw/2, cy+rw/2+sl); ctx.stroke();
+  // S stop line
+  ctx.strokeStyle = colorOf('S');
+  ctx.beginPath(); ctx.moveTo(cx-rw/2, cy-rw/2-sl); ctx.lineTo(cx, cy-rw/2-sl); ctx.stroke();
+  // E stop line
+  ctx.strokeStyle = colorOf('E');
+  ctx.beginPath(); ctx.moveTo(cx-rw/2-sl, cy); ctx.lineTo(cx-rw/2-sl, cy+rw/2); ctx.stroke();
+  // W stop line
+  ctx.strokeStyle = colorOf('W');
+  ctx.beginPath(); ctx.moveTo(cx+rw/2+sl, cy-rw/2); ctx.lineTo(cx+rw/2+sl, cy); ctx.stroke();
+}
+
+function drawMiniSignal(x, y, dir) {
+  const s = 5;
+  ctx.fillStyle = '#05101a';
+  ctx.fillRect(x-s, y-s*2.6, s*2, s*5.2);
+
+  const st = phaseColor(dir);
+  const rOn = st==='red', yOn = st==='yellow', gOn = st==='green';
+  const dot = (col, on, yo) => {
+    ctx.beginPath(); ctx.arc(x, y+yo, s-1.5, 0, Math.PI*2);
+    ctx.fillStyle = on ? col : col.replace(')',',0.06)').replace('rgb','rgba').replace('#','rgba(').replace(/([0-9a-f]{2})/gi,(m,i)=>i===0?parseInt(m,16)+',':parseInt(m,16)+',');
+    // simpler:
+    ctx.fillStyle = on ? col : 'rgba(0,0,0,0.3)';
+    if (on) { ctx.shadowColor=col; ctx.shadowBlur=7; }
+    ctx.fill();
+    ctx.shadowBlur=0;
+  };
+  dot('#ff1744', rOn, -s*2);
+  dot('#ffd600', yOn,  0);
+  dot('#00ff88', gOn,  s*2);
+}
+
+function drawCar(c) {
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  ctx.rotate(c.ang);
+  const W=12, H=20;
+
+  if (c.isEmg) {
+    ctx.fillStyle='#fff';
+    ctx.fillRect(-W/2,-H/2,W,H);
+    ctx.fillStyle='#f00';
+    ctx.fillRect(-1.5,-H/2+3,3,H-6);
+    ctx.fillRect(-W/2+2,-1.5,W-4,3);
+    // strobe
+    const f = (Date.now()>>8)&1;
+    ctx.fillStyle = f?'#f00':'#00f';
+    ctx.fillRect(-W/2,-H/2,W/2-1,3);
+    ctx.fillStyle = f?'#00f':'#f00';
+    ctx.fillRect(1,-H/2,W/2-1,3);
+  } else {
+    ctx.fillStyle = c.color;
+    ctx.beginPath(); ctx.roundRect(-W/2,-H/2,W,H,2); ctx.fill();
+    // windshield
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.fillRect(-W/2+1,-H/2+2,W-2,H*0.28);
+    if (c.waiting) {
+      // brake lights only (no shadow – perf)
+      ctx.fillStyle='#f22';
+      ctx.fillRect(-W/2+1,H/2-4,(W-2)/2-1,3);
+      ctx.fillRect(W/2-(W-2)/2,H/2-4,(W-2)/2-1,3);
+    } else {
+      ctx.fillStyle='rgba(255,240,160,0.7)';
+      ctx.fillRect(-W/2+1,-H/2+1,(W-2)/2-1,2);
+      ctx.fillRect(W/2-(W-2)/2,-H/2+1,(W-2)/2-1,2);
+    }
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════
+// SIGNAL CONTROLLER
+// ═══════════════════════════════════════════════════
+function phaseDuration(ph) {
+  if (ph.includes('green'))  return DUR.green;
+  if (ph.includes('yellow')) return DUR.yellow;
+  return DUR.red;
+}
+
+function advancePhase() {
+  phaseIdx = (phaseIdx+1) % PHASE_SEQ.length;
+  if (phaseIdx === 0) cycleCount++;
+  phase = PHASE_SEQ[phaseIdx];
+  countdown = phaseDuration(phase);
+  maxDur = countdown;
+  document.getElementById('hc').textContent = cycleCount;
+  addLog('Phase → ' + phase + ' (' + countdown + 's)', 'info');
+}
+
+setInterval(()=>{
+  if (!autoMode || emgActive) return;
+  countdown--;
+  if (countdown <= 0) advancePhase();
+  updateSignalUI();
+}, 1000);
+
+function updateSignalUI() {
+  // Active phase light panel (shows the active pair's colour)
+  let col = 'var(--rd)', lbl = 'RED';
+  if (phase.includes('green'))  { col='var(--gr)'; lbl='GREEN'; }
+  if (phase.includes('yellow')) { col='var(--yw)'; lbl='YELLOW'; }
+
+  document.getElementById('br').className = 'bulb '+(lbl==='RED'?'r-on':'r-off');
+  document.getElementById('by').className = 'bulb '+(lbl==='YELLOW'?'y-on':'y-off');
+  document.getElementById('bg').className = 'bulb '+(lbl==='GREEN'?'g-on':'g-off');
+
+  document.getElementById('tlph').textContent = lbl;
+  document.getElementById('tlph').style.color  = col;
+  document.getElementById('tlct').textContent  = countdown;
+  document.getElementById('tlct').style.color  = col;
+  document.getElementById('tlfl').style.width  = ((maxDur-countdown)/maxDur*100)+'%';
+  document.getElementById('tlfl').style.background = col;
+
+  // Green direction badge
+  const gdEl = document.getElementById('gdtxt');
+  if (emgActive) {
+    document.getElementById('green-dir').style.borderColor='var(--or)';
+    gdEl.textContent = emgDir + ' APPROACH — EMERGENCY GREEN';
+    gdEl.style.color = 'var(--or)';
+  } else {
+    document.getElementById('green-dir').style.borderColor='var(--brd2)';
+    if (phase==='NS_green')  { gdEl.textContent='N/S APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
+    else if (phase==='EW_green') { gdEl.textContent='E/W APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
+    else { gdEl.textContent='TRANSITIONING — ALL RED'; gdEl.style.color='var(--rd)'; }
+  }
+
+  // Per-signal badges
+  ['N','S','E','W'].forEach(d=>{
+    const el = document.getElementById('sig-'+d);
+    const st = phaseColor(d);
+    el.textContent = st.toUpperCase();
+    el.className   = 'sigbadge '+st;
+  });
+}
+updateSignalUI();
+
+// ═══════════════════════════════════════════════════
+// MANUAL CONTROLS
+// ═══════════════════════════════════════════════════
+function setMode(mode) {
+  if (emgActive) { addLog('Blocked: emergency override active','warn'); return; }
+  ['auto','NS','EW','all-red'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
+  document.getElementById('btn-'+mode).classList.add('active');
+
+  if (mode==='auto') {
+    autoMode=true;
+    addLog('AUTO cycle resumed','ok');
+  } else {
+    autoMode=false;
+    if (mode==='NS')      { phase='NS_green';  countdown=DUR.green;  maxDur=DUR.green; }
+    else if (mode==='EW') { phase='EW_green';  countdown=DUR.green;  maxDur=DUR.green; }
+    else                  { phase='NS_yellow'; countdown=99; maxDur=99; } // all-red via yellow
+    updateSignalUI();
+    addLog('Manual → '+mode.toUpperCase(),'warn');
+  }
+}
+
+function setDur(type, val) {
+  DUR[type] = parseInt(val);
+  document.getElementById('dv-'+type[0]).textContent = val;
+  const sl = document.getElementById('sl-'+type[0]);
+  sl.style.setProperty('--p', ((val-sl.min)/(sl.max-sl.min)*100)+'%');
+  addLog(type.toUpperCase()+' duration → '+val+'s','info');
+}
+['r','y','g'].forEach(k=>{
+  const sl=document.getElementById('sl-'+k);
+  sl.style.setProperty('--p',((sl.value-sl.min)/(sl.max-sl.min)*100)+'%');
+});
+
+// ═══════════════════════════════════════════════════
+// RF + AMBULANCE  (direction-specific green)
+// ═══════════════════════════════════════════════════
+const rfc = document.getElementById('rfc');
+const rctx = rfc.getContext('2d');
+let rfT=0, rfOn=false, rfPow=-30, rfPowTgt=-30;
+
+function drawRF() {
+  rfc.width=rfc.offsetWidth; rfc.height=rfc.offsetHeight;
+  const W=rfc.width,H=rfc.height;
+  rctx.fillStyle='#040c12'; rctx.fillRect(0,0,W,H);
+
+  // grid
+  rctx.strokeStyle='rgba(0,229,255,0.04)'; rctx.lineWidth=0.5;
+  for(let i=1;i<4;i++){rctx.beginPath();rctx.moveTo(0,H*i/4);rctx.lineTo(W,H*i/4);rctx.stroke();}
+
+  rfPow+=(rfPowTgt-rfPow)*0.07;
+  document.getElementById('rfpsd').textContent=rfPow.toFixed(1)+' dB';
+
+  const amp = rfOn ? H*0.38*(0.85+0.15*Math.sin(rfT*0.25)) : H*0.05+H*0.02*Math.random();
+  const freq = rfOn ? 0.10 : 0.025;
+  rctx.strokeStyle = rfOn?'rgba(255,109,0,0.85)':'rgba(0,229,255,0.45)';
+  rctx.lineWidth = rfOn ? 1.8 : 1.2;
+  rctx.beginPath();
+  for(let x=0;x<W;x++){
+    const n=(Math.random()-0.5)*H*(rfOn?0.025:0.12);
+    const y=H/2+Math.sin((x+rfT)*freq)*amp+n;
+    x===0?rctx.moveTo(x,y):rctx.lineTo(x,y);
+  }
+  rctx.stroke();
+  rfT+=rfOn?7:1.5;
+}
+
+function triggerAmb() {
+  if (emgActive) return;
+
+  // Pick a random approach direction for ambulance
+  const dirs = ['N','S','E','W'];
+  emgDir = dirs[Math.floor(Math.random()*4)];
+
+  emgActive=true; rfOn=true; rfPowTgt=18.4;
+  totalEmg++;
+  spawnCar(emgDir, true);
+
+  // Signal: only emgDir goes green, all others red
+  autoMode=false;
+  phase='NS_yellow'; // neutral state so phaseColor delegates to emgActive branch
+  countdown=20; maxDur=20;
+
+  document.getElementById('detb').classList.add('on');
+  document.getElementById('dettxt').textContent='AMBULANCE — 434.000 MHz DETECTED';
+  document.getElementById('obanner').style.display='block';
+  document.getElementById('obanner').textContent='⚠ EMERGENCY: ' + emgDir + '-APPROACH GREEN — OTHERS RED';
+  document.getElementById('simbtn').disabled=true;
+  document.getElementById('sc-emg').textContent=totalEmg;
+  updateSignalUI();
+
+  addLog('RF +18.4 dB @ 434.000 MHz','alert');
+  addLog('Ambulance detected — '+emgDir+' approach','alert');
+  addLog('Signal: '+emgDir+' → GREEN | N/S/E/W others → RED','warn');
+
+  if (emgTimeout) clearTimeout(emgTimeout);
+  emgTimeout = setTimeout(()=>{
+    emgActive=false; emgDir=null; rfOn=false; rfPowTgt=-30;
+    document.getElementById('detb').classList.remove('on');
+    document.getElementById('dettxt').textContent='NO SIGNAL AT 434 MHz';
+    document.getElementById('obanner').style.display='none';
+    document.getElementById('simbtn').disabled=false;
+
+    // Resume normal auto from NS_green
+    autoMode=true;
+    phase='NS_green'; phaseIdx=0;
+    countdown=DUR.green; maxDur=DUR.green;
+    document.getElementById('btn-auto').classList.add('active');
+    ['NS','EW','all-red'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
+    updateSignalUI();
+    addLog('Emergency cleared — AUTO cycle resumed','ok');
+  }, 10000);
+}
+
+// ═══════════════════════════════════════════════════
+// HISTORY CHARTS  (lightweight canvas line charts)
+// ═══════════════════════════════════════════════════
+let h1=new Array(HIST).fill(0), h2=new Array(HIST).fill(0), h3=new Array(HIST).fill(0);
+
+function push(arr,v){ arr.push(v); if(arr.length>HIST) arr.shift(); }
+
+function lineChart(id, data, col) {
+  const c=document.getElementById(id);
+  if(!c) return;
+  c.width=c.offsetWidth; c.height=c.offsetHeight;
+  const W=c.width,H=c.height,ct=c.getContext('2d');
+  const max=Math.max(...data,1);
+  const pts=data.map((v,i)=>[i/(HIST-1)*W, H-4-(v/max)*(H-10)]);
+  ct.clearRect(0,0,W,H);
+  // fill
+  ct.beginPath(); ct.moveTo(pts[0][0],H);
+  pts.forEach(p=>ct.lineTo(p[0],p[1]));
+  ct.lineTo(pts[pts.length-1][0],H); ct.closePath();
+  const g=ct.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,col+'33'); g.addColorStop(1,'transparent');
+  ct.fillStyle=g; ct.fill();
+  // line
+  ct.beginPath(); pts.forEach((p,i)=>i===0?ct.moveTo(p[0],p[1]):ct.lineTo(p[0],p[1]));
+  ct.strokeStyle=col; ct.lineWidth=1.4; ct.stroke();
+  // latest
+  ct.fillStyle=col; ct.font='9px Share Tech Mono'; ct.textAlign='right';
+  ct.fillText(data[data.length-1].toFixed(0), W-3, 11);
+}
+
+// ═══════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════
+function addLog(msg, type='info') {
+  const el=document.createElement('div');
+  el.className='li '+type;
+  el.innerHTML=`<span class="lt">${new Date().toTimeString().slice(0,8)}</span><span>${msg}</span>`;
+  const ll=document.getElementById('llog');
+  ll.insertBefore(el,ll.firstChild);
+  if(ll.children.length>35) ll.removeChild(ll.lastChild);
+}
+
+// ═══════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════
+setInterval(()=>{ document.getElementById('clk').textContent=new Date().toTimeString().slice(0,8); },1000);
+
+// ═══════════════════════════════════════════════════
+// MAIN LOOP  (rAF – throttled heavy ops)
+// ═══════════════════════════════════════════════════
+function loop() {
+  updateCars();
+  render();
+
+  // RF every 2nd frame
+  if (frame%2===0) drawRF();
+
+  // Stats every 60 frames (~1s)
+  if (frame%60===0) {
+    const wt = cars.length>0
+      ? Math.round(cars.reduce((s,c)=>s+c.waitTicks,0)/cars.length/60)
+      : 0;
+    document.getElementById('hv').textContent = Math.max(0, cars.length*55 + Math.floor(Math.random()*10));
+    document.getElementById('hw').textContent = wt+'s';
+    document.getElementById('hcl').textContent = totalCleared;
+    push(h1, cars.length);
+    push(h2, wt);
+    push(h3, totalCleared%80);
+    lineChart('cv1',h1,'#00e5ff');
+    lineChart('cv2',h2,'#ff1744');
+    lineChart('cv3',h3,'#00ff88');
+  }
+
+  frame++;
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('resize',()=>{ resize(); roadDirty=true; });
+resize();
+
+addLog('ATMS v2.5 initialized','ok');
+addLog('RTL-SDR dongle @ 2.4 MSPS','info');
+addLog('4-phase signal controller started','ok');
+
+// Initial burst
+setTimeout(()=>{
+  ['N','S','E','W'].forEach(d=>spawnCar(d,false));
+  ['N','S'].forEach(d=>spawnCar(d,false));
+},300);
+
+loop();
+</script>
+</body>
+</html>
