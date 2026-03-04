@@ -1,11 +1,11 @@
-# Intelligent Traffic Management System (ITMS)
+# Automated Traffic Management System (ATMS)
 ### Emergency Vehicle Signal Preemption Module
 
 ---
 
 ## Overview
 
-This project implements a software simulation of an Intelligent Traffic Management System designed to provide unobstructed passage to emergency vehicles, specifically ambulances, at controlled four-way intersections.
+This project implements a software simulation of an Automated Traffic Management System designed to provide unobstructed passage to emergency vehicles, specifically ambulances, at controlled four-way intersections.
 
 Upon detection of a 434 MHz radio frequency signal broadcast by the emergency vehicle, the system suspends the standard traffic signal cycle, clears the intersection, and assigns a green signal exclusively to the ambulance approach corridor. Normal operation resumes automatically upon clearance.
 
@@ -62,8 +62,8 @@ The system is developed for deployment on Raspberry Pi hardware with GPIO-connec
 ## Installation and Execution
 
 ```bash
-git clone https://github.com/<organisation>/itms.git
-cd itms
+git clone https://github.com/<organisation>/atms.git
+cd atms
 python itms_system.py
 ```
 
@@ -74,7 +74,7 @@ No additional installation steps are required for simulation mode. The system ru
 ## File Structure
 
 ```
-itms/
+atms/
 |-- itms_system.py       Main system file
 |-- itms_log.txt         Auto-generated event log (created on first run)
 |-- README.md            Project documentation
@@ -127,7 +127,7 @@ The following deficiencies present in the original prototype have been corrected
 
 ## Authors
 
-Developed as part of an academic project under the subject domain of Intelligent Transportation Systems.
+Developed as part of an academic project under the subject domain of Automated Transportation Systems.
 
 ---
 
