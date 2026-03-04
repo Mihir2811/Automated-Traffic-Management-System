@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>ATMS — Live Traffic Control</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -12,44 +12,50 @@
   --wh:#e8f4f8;--dim:#3a6070;--dim2:#5a8090;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;}
-body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--wh);display:flex;flex-direction:column;}
+html,body{width:100%;height:100%;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--wh);display:flex;flex-direction:column;overflow:hidden;}
 
-/* scanlines – cheap, single pseudo-element */
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
   background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 4px);}
 
 /* ── HEADER ── */
 #hdr{display:flex;align-items:center;justify-content:space-between;
-  padding:8px 18px;border-bottom:1px solid var(--brd);
-  background:rgba(7,16,24,0.98);flex-shrink:0;}
-.logo{display:flex;align-items:center;gap:10px;}
-.lhex{width:36px;height:36px;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
+  padding:8px 14px;border-bottom:1px solid var(--brd);
+  background:rgba(7,16,24,0.98);flex-shrink:0;gap:8px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.lhex{width:32px;height:32px;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%);
   background:rgba(0,229,255,0.08);border:1px solid var(--cy);display:flex;align-items:center;justify-content:center;
-  font-size:15px;animation:hpulse 3s ease-in-out infinite;}
+  font-size:13px;animation:hpulse 3s ease-in-out infinite;}
 @keyframes hpulse{0%,100%{box-shadow:0 0 6px rgba(0,229,255,0.15);}50%{box-shadow:0 0 18px rgba(0,229,255,0.4);}}
-.ltitle{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;letter-spacing:4px;color:var(--cy);}
-.lsub{font-size:8px;letter-spacing:3px;color:var(--dim2);margin-top:1px;}
-.hctr{display:flex;gap:20px;align-items:center;}
+.ltitle{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;color:var(--cy);}
+.lsub{font-size:7px;letter-spacing:2px;color:var(--dim2);margin-top:1px;}
+.hctr{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .hs{text-align:center;}
-.hsv{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--cy);}
-.hsl{font-size:8px;letter-spacing:2px;color:var(--dim);margin-top:1px;}
-.hright{display:flex;align-items:center;gap:16px;}
-.syss{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:2px;color:var(--gr);}
-.ldot{width:6px;height:6px;border-radius:50%;background:var(--gr);box-shadow:0 0 7px var(--gr);animation:blk 1.4s ease-in-out infinite;}
+.hsv{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--cy);}
+.hsl{font-size:7px;letter-spacing:1px;color:var(--dim);margin-top:1px;}
+.hright{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.syss{display:flex;align-items:center;gap:5px;font-size:8px;letter-spacing:1px;color:var(--gr);}
+.ldot{width:5px;height:5px;border-radius:50%;background:var(--gr);box-shadow:0 0 7px var(--gr);animation:blk 1.4s ease-in-out infinite;}
 @keyframes blk{0%,100%{opacity:1;}50%{opacity:0.15;}}
-#clk{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cy);letter-spacing:3px;}
+#clk{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--cy);letter-spacing:2px;}
+
+/* ── MOBILE TAB BAR ── */
+#tabbar{display:none;flex-shrink:0;border-bottom:1px solid var(--brd);background:var(--sur);}
+.tab{flex:1;padding:8px 4px;background:transparent;border:none;color:var(--dim2);
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;cursor:pointer;
+  text-transform:uppercase;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab.active{color:var(--cy);border-bottom-color:var(--cy);}
 
 /* ── LAYOUT ── */
-#main{display:flex;flex:1;overflow:hidden;}
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
 #lpanel{width:224px;flex-shrink:0;border-right:1px solid var(--brd);background:var(--sur);overflow-y:auto;display:flex;flex-direction:column;}
 #lpanel::-webkit-scrollbar{width:2px;}
 #lpanel::-webkit-scrollbar-thumb{background:var(--brd2);}
-#ctr{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-#iw{flex:1;position:relative;overflow:hidden;}
+#ctr{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#iw{flex:1;position:relative;overflow:hidden;min-height:0;}
 #ic{width:100%;height:100%;display:block;}
-#bstrip{height:120px;flex-shrink:0;border-top:1px solid var(--brd);display:flex;}
-#rpanel{width:252px;flex-shrink:0;border-left:1px solid var(--brd);background:var(--sur);display:flex;flex-direction:column;}
+#bstrip{height:110px;flex-shrink:0;border-top:1px solid var(--brd);display:flex;}
+#rpanel{width:252px;flex-shrink:0;border-left:1px solid var(--brd);background:var(--sur);display:flex;flex-direction:column;overflow:hidden;}
 
 /* ── SECTIONS ── */
 .sec{border-bottom:1px solid var(--brd);padding:12px;}
@@ -74,7 +80,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .tlct{font-size:26px;font-family:'Orbitron',sans-serif;font-weight:900;}
 .tlsec{font-size:10px;color:var(--dim2);letter-spacing:2px;}
 
-/* Current green direction badge */
 #green-dir{margin-top:6px;padding:5px 8px;background:#040c12;border:1px solid var(--brd2);
   font-size:9px;letter-spacing:2px;color:var(--dim2);display:flex;align-items:center;gap:6px;}
 #green-dir .gdd{font-size:11px;color:var(--gr);}
@@ -83,8 +88,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;}
 .mb{background:transparent;border:1px solid var(--brd2);color:var(--dim2);
   font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
-  padding:7px 4px;cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
-.mb:hover{border-color:var(--cy);color:var(--cy);background:rgba(0,229,255,0.04);}
+  padding:8px 4px;cursor:pointer;transition:all 0.15s;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.mb:hover,.mb:active{border-color:var(--cy);color:var(--cy);background:rgba(0,229,255,0.04);}
 .mb.ar.active{border-color:var(--rd);color:var(--rd);background:rgba(255,23,68,0.07);}
 .mb.ay.active{border-color:var(--yw);color:var(--yw);background:rgba(255,214,0,0.07);}
 .mb.ag.active{border-color:var(--gr);color:var(--gr);background:rgba(0,255,136,0.07);}
@@ -92,14 +98,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .mb:disabled{opacity:0.3;cursor:not-allowed;}
 
 /* ── SLIDERS ── */
-.drow{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.drow{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
 .dlbl{font-size:8px;letter-spacing:1px;width:12px;text-align:center;}
 .dlbl.r{color:var(--rd);}.dlbl.y{color:var(--yw);}.dlbl.g{color:var(--gr);}
-.dsl{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;outline:none;cursor:pointer;}
+.dsl{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer;}
 .dsl.rs{background:linear-gradient(90deg,var(--rd) var(--p,60%),var(--brd2) var(--p,60%));}
 .dsl.ys{background:linear-gradient(90deg,var(--yw) var(--p,6%),var(--brd2) var(--p,6%));}
 .dsl.gs{background:linear-gradient(90deg,var(--gr) var(--p,40%),var(--brd2) var(--p,40%));}
-.dsl::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;cursor:pointer;}
+.dsl::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;cursor:pointer;}
 .dsl.rs::-webkit-slider-thumb{background:var(--rd);box-shadow:0 0 5px var(--rd);}
 .dsl.ys::-webkit-slider-thumb{background:var(--yw);box-shadow:0 0 5px var(--yw);}
 .dsl.gs::-webkit-slider-thumb{background:var(--gr);box-shadow:0 0 5px var(--gr);}
@@ -129,10 +135,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .detb.on{border-color:var(--or);color:var(--or);background:rgba(255,109,0,0.06);box-shadow:0 0 10px rgba(255,109,0,0.12);}
 .detb .dd{width:6px;height:6px;border-radius:50%;background:var(--dim);transition:all 0.3s;flex-shrink:0;}
 .detb.on .dd{background:var(--or);box-shadow:0 0 7px var(--or);animation:blk 0.7s ease-in-out infinite;}
-.simbtn{width:100%;margin-top:7px;padding:9px;background:transparent;border:1px solid var(--or);
+.simbtn{width:100%;margin-top:7px;padding:12px;background:transparent;border:1px solid var(--or);
   color:var(--or);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;cursor:pointer;
-  transition:all 0.15s;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);}
-.simbtn:hover{background:rgba(255,109,0,0.08);}
+  transition:all 0.15s;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.simbtn:hover,.simbtn:active{background:rgba(255,109,0,0.08);}
 .simbtn:disabled{opacity:0.35;cursor:not-allowed;}
 
 /* ── LOG ── */
@@ -149,16 +156,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .lt{color:var(--dim);flex-shrink:0;}
 
 /* ── BOTTOM CHARTS ── */
-.bpanel{flex:1;border-right:1px solid var(--brd);padding:7px 10px;display:flex;flex-direction:column;}
+.bpanel{flex:1;border-right:1px solid var(--brd);padding:6px 8px;display:flex;flex-direction:column;}
 .bpanel:last-child{border-right:none;}
-.btitle{font-size:7px;letter-spacing:3px;color:var(--dim2);margin-bottom:5px;text-transform:uppercase;}
+.btitle{font-size:7px;letter-spacing:2px;color:var(--dim2);margin-bottom:4px;text-transform:uppercase;}
 .bcvs{flex:1;width:100%;display:block;}
 
 /* ── OVERRIDE BANNER ── */
 #obanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);
-  padding:6px 20px;background:rgba(255,109,0,0.12);border:1px solid var(--or);
-  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--or);
-  display:none;z-index:20;white-space:nowrap;
+  padding:6px 16px;background:rgba(255,109,0,0.12);border:1px solid var(--or);
+  font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--or);
+  display:none;z-index:20;white-space:nowrap;max-width:90%;text-align:center;
   animation:bp 0.9s ease-in-out infinite;}
 @keyframes bp{0%,100%{box-shadow:0 0 8px rgba(255,109,0,0.15);}50%{box-shadow:0 0 22px rgba(255,109,0,0.45);}}
 
@@ -167,6 +174,133 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 .qbar-top{display:flex;justify-content:space-between;font-size:7px;letter-spacing:2px;color:var(--dim);margin-bottom:3px;}
 .qbar-bg{height:3px;background:var(--brd2);border-radius:2px;overflow:hidden;}
 .qbar-fill{height:100%;border-radius:2px;transition:width 0.4s ease;}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════════ */
+
+/* ── TABLET (≤900px): hide right panel behind tab ── */
+@media (max-width: 900px) {
+  #rpanel{
+    display:none;
+    position:fixed;top:0;right:0;bottom:0;
+    width:100%;max-width:320px;
+    z-index:200;
+    border-left:1px solid var(--brd);
+    background:var(--sur);
+    overflow-y:auto;
+  }
+  #rpanel.open{display:flex;}
+  #main{position:relative;}
+  .bpanel .btitle{font-size:6px;letter-spacing:1px;}
+}
+
+/* ── MOBILE (≤640px): stack everything, use tabs ── */
+@media (max-width: 640px) {
+  body{overflow:hidden;}
+
+  #tabbar{display:flex;}
+
+  #hdr{padding:6px 10px;}
+  .ltitle{font-size:11px;letter-spacing:2px;}
+  .lsub{display:none;}
+  .hctr{gap:8px;}
+  .hsv{font-size:12px;}
+  .hsl{font-size:6px;}
+  #clk{font-size:10px;letter-spacing:1px;}
+  .syss span:last-child{display:none;}
+
+  /* Stack all panels in the same space using position:absolute.
+     #ctr (canvas) is NEVER taken out of layout — only hidden with
+     visibility:hidden — so the canvas always has real pixel dimensions
+     and never produces a black screen when switching back to the map tab. */
+  #main{position:relative;overflow:hidden;}
+
+  #lpanel, #ctr, #rpanel {
+    position:absolute;
+    inset:0;
+    width:100%;
+    max-width:100%;
+    border-right:none;
+    border-left:none;
+    visibility:hidden;
+    pointer-events:none;
+    z-index:1;
+  }
+  #lpanel, #rpanel { overflow-y:auto; }
+  #ctr { overflow:hidden; flex-direction:column; display:flex; }
+
+  #lpanel.mobile-active,
+  #ctr.mobile-active,
+  #rpanel.mobile-active,
+  #rpanel.open { visibility:visible; pointer-events:auto; z-index:2; }
+
+  /* Bottom strip: 2 charts on mobile */
+  #bstrip{height:90px;}
+  .bpanel:nth-child(3){display:none;}
+  .btitle{font-size:6px;letter-spacing:1px;}
+
+  /* Compact sliders for mobile */
+  .drow{margin-bottom:8px;}
+  .sec{padding:10px;}
+  .stitle{margin-bottom:8px;}
+
+  /* Stat grid full width */
+  .sgrid{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .snum{font-size:15px;}
+
+  /* Signal badges inline */
+  .sigrow{margin-bottom:5px;}
+
+  /* Override banner font smaller */
+  #obanner{font-size:8px;letter-spacing:1px;padding:5px 12px;}
+
+  /* RF section compact */
+  #rfc{height:50px;}
+  .rffreq{font-size:12px;}
+}
+
+/* ── VERY SMALL (≤380px) ── */
+@media (max-width: 380px) {
+  .sgrid{grid-template-columns:1fr 1fr;}
+  .hctr{display:none;}
+  .mgrid .mb{font-size:8px;padding:7px 2px;}
+}
+
+/* ── LANDSCAPE PHONE ── */
+@media (max-width: 767px) and (orientation: landscape) {
+  #bstrip{height:70px;}
+  .sec{padding:8px;}
+  .stitle{margin-bottom:6px;}
+  .snum{font-size:14px;}
+  .tlct{font-size:20px;}
+  .bulb{width:26px;height:26px;}
+}
+
+/* ── HAMBURGER BUTTON (tablet) ── */
+#rf-toggle{
+  display:none;
+  position:fixed;bottom:16px;right:16px;
+  width:44px;height:44px;
+  background:rgba(7,16,24,0.95);
+  border:1px solid var(--cy);
+  border-radius:50%;
+  color:var(--cy);
+  font-size:16px;
+  cursor:pointer;
+  z-index:300;
+  align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(0,229,255,0.2);
+  -webkit-tap-highlight-color:transparent;
+}
+@media (max-width:900px) and (min-width:641px){
+  #rf-toggle{display:flex;}
+}
+#rf-overlay{
+  display:none;
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:199;
+}
+#rf-overlay.show{display:block;}
 </style>
 </head>
 <body>
@@ -178,15 +312,22 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
     <div><div class="ltitle">ATMS</div><div class="lsub">AUTOMATED TRAFFIC MANAGEMENT SYSTEM</div></div>
   </div>
   <div class="hctr">
-    <div class="hs"><div class="hsv" id="hv">0</div><div class="hsl">VEHICLES/HR</div></div>
+    <div class="hs"><div class="hsv" id="hv">0</div><div class="hsl">VEH/HR</div></div>
     <div class="hs"><div class="hsv" id="hw">0s</div><div class="hsl">AVG WAIT</div></div>
     <div class="hs"><div class="hsv" id="hc">0</div><div class="hsl">CYCLES</div></div>
     <div class="hs"><div class="hsv" id="hcl">0</div><div class="hsl">CLEARED</div></div>
   </div>
   <div class="hright">
-    <div class="syss"><div class="ldot"></div>SYSTEM LIVE</div>
+    <div class="syss"><div class="ldot"></div><span>LIVE</span></div>
     <div id="clk">00:00:00</div>
   </div>
+</div>
+
+<!-- MOBILE TAB BAR -->
+<div id="tabbar">
+  <button class="tab" id="tab-signal" onclick="switchTab('signal')">SIGNAL</button>
+  <button class="tab active" id="tab-map" onclick="switchTab('map')">MAP</button>
+  <button class="tab" id="tab-rf" onclick="switchTab('rf')">RF / LOG</button>
 </div>
 
 <!-- MAIN -->
@@ -195,7 +336,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
   <!-- LEFT PANEL -->
   <div id="lpanel">
 
-    <!-- Active signal display (single light shown = active phase) -->
     <div class="sec">
       <div class="stitle">Active Signal Phase</div>
       <div class="tlw">
@@ -214,7 +354,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
       <div id="green-dir"><span class="gdd">↑</span><span id="gdtxt">N/S APPROACH — GREEN</span></div>
     </div>
 
-    <!-- Per-signal status (all 4) -->
     <div class="sec">
       <div class="stitle">All Signal States</div>
       <div class="sigrow"><span class="signame">N (NORTHBOUND)</span><span class="sigbadge red" id="sig-N">RED</span></div>
@@ -223,18 +362,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
       <div class="sigrow"><span class="signame">W (WESTBOUND)</span><span class="sigbadge red" id="sig-W">RED</span></div>
     </div>
 
-    <!-- Manual override -->
     <div class="sec">
       <div class="stitle">Manual Override</div>
       <div class="mgrid">
         <button class="mb aa active" id="btn-auto" onclick="setMode('auto')">AUTO</button>
         <button class="mb ar" id="btn-NS" onclick="setMode('NS')">N/S GREEN</button>
         <button class="mb ag" id="btn-EW" onclick="setMode('EW')">E/W GREEN</button>
-        <button class="mb ay" id="btn-all-red" onclick="setMode('allred')">ALL RED</button>
+        <button class="mb ay" id="btn-allred" onclick="setMode('allred')">ALL RED</button>
       </div>
     </div>
 
-    <!-- Duration sliders -->
     <div class="sec">
       <div class="stitle">Phase Duration (sec)</div>
       <div class="drow">
@@ -254,7 +391,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
       </div>
     </div>
 
-    <!-- Live counters -->
     <div class="sec">
       <div class="stitle">Live Counters</div>
       <div class="sgrid">
@@ -265,7 +401,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
       </div>
     </div>
 
-    <!-- Queue bars -->
     <div class="sec" style="flex:1;border-bottom:none;">
       <div class="stitle">Queue Length</div>
       <div id="qbars"></div>
@@ -274,7 +409,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
   </div>
 
   <!-- CENTER CANVAS -->
-  <div id="ctr">
+  <div id="ctr" class="mobile-active">
     <div id="iw">
       <canvas id="ic"></canvas>
       <div id="obanner">⚠ EMERGENCY OVERRIDE ACTIVE</div>
@@ -310,8 +445,70 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
 
 </div><!-- /main -->
 
+<!-- Tablet RF toggle button -->
+<button id="rf-toggle" onclick="toggleRFPanel()" title="RF / Log">📡</button>
+<div id="rf-overlay" onclick="closeRFPanel()"></div>
+
 <script>
 'use strict';
+
+// ═══════════════════════════════════════════════════
+// MOBILE TAB NAVIGATION
+// ═══════════════════════════════════════════════════
+let currentTab = 'map';
+
+function isMobile() { return window.innerWidth <= 640; }
+
+function switchTab(tab) {
+  if (!isMobile()) return;
+  currentTab = tab;
+  ['signal','map','rf'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  // Remove active from all panels
+  document.getElementById('lpanel').classList.remove('mobile-active');
+  document.getElementById('ctr').classList.remove('mobile-active');
+  document.getElementById('rpanel').classList.remove('mobile-active');
+  document.getElementById('rpanel').classList.remove('open');
+
+  if (tab==='signal') document.getElementById('lpanel').classList.add('mobile-active');
+  else if (tab==='map') document.getElementById('ctr').classList.add('mobile-active');
+  else if (tab==='rf') {
+    document.getElementById('rpanel').classList.add('mobile-active');
+    document.getElementById('rpanel').classList.add('open');
+  }
+  // Canvas is always in layout (visibility:hidden, not display:none),
+  // so resize() reads correct dimensions immediately — no setTimeout needed.
+  resize();
+  roadDirty = true;
+}
+
+function toggleRFPanel() {
+  const rp = document.getElementById('rpanel');
+  const ov = document.getElementById('rf-overlay');
+  const isOpen = rp.classList.contains('open');
+  rp.classList.toggle('open', !isOpen);
+  ov.classList.toggle('show', !isOpen);
+}
+function closeRFPanel() {
+  document.getElementById('rpanel').classList.remove('open');
+  document.getElementById('rf-overlay').classList.remove('show');
+}
+
+// On resize, reset mobile layout if going desktop
+window.addEventListener('resize', () => {
+  if (!isMobile()) {
+    document.getElementById('lpanel').classList.remove('mobile-active');
+    document.getElementById('ctr').classList.remove('mobile-active');
+    document.getElementById('rpanel').classList.remove('mobile-active');
+    document.getElementById('rpanel').classList.remove('open');
+  } else {
+    switchTab(currentTab);
+  }
+  resize();
+  roadDirty = true;
+});
+
 // ═══════════════════════════════════════════════════
 // CONSTANTS & STATE
 // ═══════════════════════════════════════════════════
@@ -319,39 +516,34 @@ const cvs = document.getElementById('ic');
 const ctx = cvs.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
 
-const MAX_CARS = 24;          // hard cap for perf
-const SPAWN_INTERVAL = 90;    // frames between spawns
+const MAX_CARS = 24;
+const SPAWN_INTERVAL = 90;
 const HIST = 70;
 
-// Signal phases: NS = N and S are green, EW = E and W are green
-// Sequence: NS_green → NS_yellow → EW_green → EW_yellow → repeat
 const PHASE_SEQ = ['NS_green','NS_yellow','EW_green','EW_yellow'];
 const DUR = { red: 30, yellow: 3, green: 20 };
 
 let phaseIdx = 0;
-let phase = 'NS_green';  // current phase name
+let phase = 'NS_green';
 let countdown = DUR.green;
 let maxDur    = DUR.green;
 let autoMode  = true;
 let emgActive = false;
 let emgTimeout = null;
-let emgDir = null;           // which direction has the ambulance
+let emgDir = null;
 let cycleCount = 0;
 let totalCleared = 0;
 let totalEmg = 0;
 let frame = 0;
 let spawnTick = 0;
 
-// Road geometry (set in resize)
 let RD = {};
 
-// ─── Signal state per direction ───────────────────
-// Returns whether a given direction has GREEN signal right now
 function dirIsGreen(dir) {
-  if (emgActive) return dir === emgDir;   // only ambulance direction
+  if (emgActive) return dir === emgDir;
   if (phase === 'NS_green')   return dir === 'N' || dir === 'S';
   if (phase === 'EW_green')   return dir === 'E' || dir === 'W';
-  return false; // yellow or transitioning = all red
+  return false;
 }
 
 function phaseColor(dir) {
@@ -360,6 +552,7 @@ function phaseColor(dir) {
   if (phase === 'NS_yellow') return (dir==='N'||dir==='S') ? 'yellow' : 'red';
   if (phase === 'EW_green')  return (dir==='E'||dir==='W') ? 'green' : 'red';
   if (phase === 'EW_yellow') return (dir==='E'||dir==='W') ? 'yellow' : 'red';
+  if (phase === 'ALL_RED')   return 'red';
   return 'red';
 }
 
@@ -372,12 +565,7 @@ function resize() {
   cvs.height = wrap.clientHeight;
   const W = cvs.width, H = cvs.height;
   const cx = W/2, cy = H/2;
-  const rw = Math.round(Math.min(W,H) * 0.16); // road width
-  // Single lane center for each direction (one lane each way)
-  // N travels upward on the RIGHT side of vertical road  → x = cx + rw/4
-  // S travels downward on the LEFT side               → x = cx - rw/4
-  // E travels rightward on the BOTTOM of horizontal road → y = cy + rw/4
-  // W travels leftward on the TOP                    → y = cy - rw/4
+  const rw = Math.round(Math.min(W,H) * 0.16);
   RD = { W, H, cx, cy, rw,
     lane: {
       N: { x: cx + rw*0.25 },
@@ -404,7 +592,10 @@ function spawnCar(dir, isEmg) {
   if      (dir==='N') { x=lane.N.x; y=H+20; vx=0; vy=-spd; ang=0; }
   else if (dir==='S') { x=lane.S.x; y=-20;  vx=0; vy= spd; ang=Math.PI; }
   else if (dir==='E') { x=-20; y=lane.E.y; vx= spd; vy=0; ang=Math.PI/2; }
-  else                { x=W+20; y=lane.W.y; vx=-spd; vy=0; ang=-Math.PI/2; }
+  else                { x=W+20; y=lane.W.y; vx=-spd; vy=0; ang:-Math.PI/2; }
+
+  // Fix: W direction angle
+  if (dir==='W') ang=-Math.PI/2;
 
   cars.push({
     id: carId++, dir, x, y, vx, vy, ang,
@@ -416,7 +607,6 @@ function spawnCar(dir, isEmg) {
   });
 }
 
-// Stop line distance from center edge (cars stop here)
 const STOP_MARGIN = 26;
 function stopLine(dir) {
   const { cx, cy, rw } = RD;
@@ -446,7 +636,6 @@ function oob(c) {
   return c.x < -80 || c.x > RD.W+80 || c.y < -80 || c.y > RD.H+80;
 }
 
-// Simple car-following: is there a stopped/slow car within gap?
 function blockedAhead(c, idx) {
   const GAP = 34;
   for (let j = 0; j < cars.length; j++) {
@@ -462,7 +651,6 @@ function blockedAhead(c, idx) {
 }
 
 function updateCars() {
-  // Spawn
   spawnTick++;
   if (spawnTick >= SPAWN_INTERVAL) {
     spawnTick = 0;
@@ -497,12 +685,10 @@ function updateCars() {
     c.x += c.vx; c.y += c.vy;
   }
 
-  // DOM updates
   document.getElementById('sc-tot').textContent  = cars.length;
   document.getElementById('sc-wait').textContent = wt;
   document.getElementById('sc-move').textContent = mv;
 
-  // Queue bars
   const qdata = [['N',qN.length,'#00e5ff'],['S',qS.length,'#00ff88'],
                   ['E',qE.length,'#ffd600'],['W',qW.length,'#ff1744']];
   let h='';
@@ -519,9 +705,8 @@ function updateCars() {
 }
 
 // ═══════════════════════════════════════════════════
-// RENDER  (optimised – minimal shadow, dirty-flag glow)
+// RENDER
 // ═══════════════════════════════════════════════════
-// Pre-build static road once into offscreen canvas
 let roadCanvas = null;
 let roadDirty  = true;
 
@@ -531,26 +716,21 @@ function buildRoad() {
   roadCanvas.width = W; roadCanvas.height = H;
   const rc = roadCanvas.getContext('2d', { alpha: false });
 
-  // BG
   rc.fillStyle = '#030a10';
   rc.fillRect(0, 0, W, H);
 
-  // Grid (draw once)
   rc.strokeStyle = 'rgba(0,229,255,0.02)';
   rc.lineWidth = 1;
   for (let x=0; x<W; x+=40){ rc.beginPath(); rc.moveTo(x,0); rc.lineTo(x,H); rc.stroke(); }
   for (let y=0; y<H; y+=40){ rc.beginPath(); rc.moveTo(0,y); rc.lineTo(W,y); rc.stroke(); }
 
-  // Road surfaces
   rc.fillStyle = '#0d1e2a';
-  rc.fillRect(0, cy-rw/2, W, rw);   // horizontal
-  rc.fillRect(cx-rw/2, 0, rw, H);   // vertical
+  rc.fillRect(0, cy-rw/2, W, rw);
+  rc.fillRect(cx-rw/2, 0, rw, H);
 
-  // Intersection fill
   rc.fillStyle = '#101e2c';
   rc.fillRect(cx-rw/2, cy-rw/2, rw, rw);
 
-  // Road edge lines
   rc.strokeStyle = 'rgba(0,229,255,0.06)';
   rc.lineWidth = 1;
   [ [0,cy-rw/2,W,cy-rw/2],[0,cy+rw/2,W,cy+rw/2],
@@ -558,19 +738,15 @@ function buildRoad() {
     rc.beginPath(); rc.moveTo(x1,y1); rc.lineTo(x2,y2); rc.stroke();
   });
 
-  // Centre lane dividers (dashed)
   rc.setLineDash([10,12]);
   rc.strokeStyle = 'rgba(255,255,255,0.04)';
   rc.lineWidth = 1;
-  // Horizontal road centre
   rc.beginPath(); rc.moveTo(0,cy); rc.lineTo(cx-rw/2,cy); rc.stroke();
   rc.beginPath(); rc.moveTo(cx+rw/2,cy); rc.lineTo(W,cy); rc.stroke();
-  // Vertical road centre
   rc.beginPath(); rc.moveTo(cx,0); rc.lineTo(cx,cy-rw/2); rc.stroke();
   rc.beginPath(); rc.moveTo(cx,cy+rw/2); rc.lineTo(cx,H); rc.stroke();
   rc.setLineDash([]);
 
-  // Lane markers showing direction arrows (faint)
   rc.fillStyle = 'rgba(0,229,255,0.07)';
   rc.font = 'bold 14px sans-serif';
   rc.textAlign = 'center'; rc.textBaseline = 'middle';
@@ -579,7 +755,6 @@ function buildRoad() {
   rc.fillText('→', cx-rw*0.75, lane.E.y);
   rc.fillText('←', cx+rw*0.75, lane.W.y);
 
-  // Compass labels
   rc.fillStyle = 'rgba(90,128,144,0.5)';
   rc.font = 'bold 10px Share Tech Mono';
   rc.fillText('N', lane.N.x, 14);
@@ -594,19 +769,14 @@ function render() {
   if (!roadCanvas || roadDirty) buildRoad();
   const { W, H, cx, cy, rw } = RD;
 
-  // Blit static road
   ctx.drawImage(roadCanvas, 0, 0);
-
-  // Stop lines (dynamic colour by signal state)
   drawStopLines();
 
-  // Mini signal heads at intersection corners
   drawMiniSignal(cx + rw/2 + 7, cy - rw/2 - 7, 'N');
   drawMiniSignal(cx - rw/2 - 7, cy + rw/2 + 7, 'S');
   drawMiniSignal(cx + rw/2 + 7, cy + rw/2 + 7, 'E');
   drawMiniSignal(cx - rw/2 - 7, cy - rw/2 - 7, 'W');
 
-  // Cars (sorted by y for basic depth)
   cars.sort((a,b)=>a.y-b.y);
   for (const c of cars) drawCar(c);
 }
@@ -619,16 +789,12 @@ function drawStopLines() {
   };
   const sl = STOP_MARGIN;
   ctx.lineWidth = 2;
-  // N stop line (cars coming from south going north, stop at bottom of intersection)
   ctx.strokeStyle = colorOf('N');
   ctx.beginPath(); ctx.moveTo(cx, cy+rw/2+sl); ctx.lineTo(cx+rw/2, cy+rw/2+sl); ctx.stroke();
-  // S stop line
   ctx.strokeStyle = colorOf('S');
   ctx.beginPath(); ctx.moveTo(cx-rw/2, cy-rw/2-sl); ctx.lineTo(cx, cy-rw/2-sl); ctx.stroke();
-  // E stop line
   ctx.strokeStyle = colorOf('E');
   ctx.beginPath(); ctx.moveTo(cx-rw/2-sl, cy); ctx.lineTo(cx-rw/2-sl, cy+rw/2); ctx.stroke();
-  // W stop line
   ctx.strokeStyle = colorOf('W');
   ctx.beginPath(); ctx.moveTo(cx+rw/2+sl, cy-rw/2); ctx.lineTo(cx+rw/2+sl, cy); ctx.stroke();
 }
@@ -642,8 +808,6 @@ function drawMiniSignal(x, y, dir) {
   const rOn = st==='red', yOn = st==='yellow', gOn = st==='green';
   const dot = (col, on, yo) => {
     ctx.beginPath(); ctx.arc(x, y+yo, s-1.5, 0, Math.PI*2);
-    ctx.fillStyle = on ? col : col.replace(')',',0.06)').replace('rgb','rgba').replace('#','rgba(').replace(/([0-9a-f]{2})/gi,(m,i)=>i===0?parseInt(m,16)+',':parseInt(m,16)+',');
-    // simpler:
     ctx.fillStyle = on ? col : 'rgba(0,0,0,0.3)';
     if (on) { ctx.shadowColor=col; ctx.shadowBlur=7; }
     ctx.fill();
@@ -666,7 +830,6 @@ function drawCar(c) {
     ctx.fillStyle='#f00';
     ctx.fillRect(-1.5,-H/2+3,3,H-6);
     ctx.fillRect(-W/2+2,-1.5,W-4,3);
-    // strobe
     const f = (Date.now()>>8)&1;
     ctx.fillStyle = f?'#f00':'#00f';
     ctx.fillRect(-W/2,-H/2,W/2-1,3);
@@ -675,11 +838,9 @@ function drawCar(c) {
   } else {
     ctx.fillStyle = c.color;
     ctx.beginPath(); ctx.roundRect(-W/2,-H/2,W,H,2); ctx.fill();
-    // windshield
     ctx.fillStyle='rgba(0,0,0,0.45)';
     ctx.fillRect(-W/2+1,-H/2+2,W-2,H*0.28);
     if (c.waiting) {
-      // brake lights only (no shadow – perf)
       ctx.fillStyle='#f22';
       ctx.fillRect(-W/2+1,H/2-4,(W-2)/2-1,3);
       ctx.fillRect(W/2-(W-2)/2,H/2-4,(W-2)/2-1,3);
@@ -719,7 +880,6 @@ setInterval(()=>{
 }, 1000);
 
 function updateSignalUI() {
-  // Active phase light panel (shows the active pair's colour)
   let col = 'var(--rd)', lbl = 'RED';
   if (phase.includes('green'))  { col='var(--gr)'; lbl='GREEN'; }
   if (phase.includes('yellow')) { col='var(--yw)'; lbl='YELLOW'; }
@@ -735,7 +895,6 @@ function updateSignalUI() {
   document.getElementById('tlfl').style.width  = ((maxDur-countdown)/maxDur*100)+'%';
   document.getElementById('tlfl').style.background = col;
 
-  // Green direction badge
   const gdEl = document.getElementById('gdtxt');
   if (emgActive) {
     document.getElementById('green-dir').style.borderColor='var(--or)';
@@ -743,12 +902,12 @@ function updateSignalUI() {
     gdEl.style.color = 'var(--or)';
   } else {
     document.getElementById('green-dir').style.borderColor='var(--brd2)';
-    if (phase==='NS_green')  { gdEl.textContent='N/S APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
-    else if (phase==='EW_green') { gdEl.textContent='E/W APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
+    if (phase==='NS_green')       { gdEl.textContent='N/S APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
+    else if (phase==='EW_green')  { gdEl.textContent='E/W APPROACH — GREEN'; gdEl.style.color='var(--gr)'; }
+    else if (phase==='ALL_RED')   { gdEl.textContent='ALL APPROACHES — RED HOLD'; gdEl.style.color='var(--rd)'; }
     else { gdEl.textContent='TRANSITIONING — ALL RED'; gdEl.style.color='var(--rd)'; }
   }
 
-  // Per-signal badges
   ['N','S','E','W'].forEach(d=>{
     const el = document.getElementById('sig-'+d);
     const st = phaseColor(d);
@@ -763,7 +922,7 @@ updateSignalUI();
 // ═══════════════════════════════════════════════════
 function setMode(mode) {
   if (emgActive) { addLog('Blocked: emergency override active','warn'); return; }
-  ['auto','NS','EW','all-red'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
+  ['auto','NS','EW','allred'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
   document.getElementById('btn-'+mode).classList.add('active');
 
   if (mode==='auto') {
@@ -771,9 +930,9 @@ function setMode(mode) {
     addLog('AUTO cycle resumed','ok');
   } else {
     autoMode=false;
-    if (mode==='NS')      { phase='NS_green';  countdown=DUR.green;  maxDur=DUR.green; }
-    else if (mode==='EW') { phase='EW_green';  countdown=DUR.green;  maxDur=DUR.green; }
-    else                  { phase='NS_yellow'; countdown=99; maxDur=99; } // all-red via yellow
+    if (mode==='NS')         { phase='NS_green';  countdown=DUR.green;  maxDur=DUR.green; }
+    else if (mode==='EW')    { phase='EW_green';  countdown=DUR.green;  maxDur=DUR.green; }
+    else if (mode==='allred'){ phase='ALL_RED';   countdown=999;        maxDur=999; }
     updateSignalUI();
     addLog('Manual → '+mode.toUpperCase(),'warn');
   }
@@ -792,7 +951,7 @@ function setDur(type, val) {
 });
 
 // ═══════════════════════════════════════════════════
-// RF + AMBULANCE  (direction-specific green)
+// RF + AMBULANCE
 // ═══════════════════════════════════════════════════
 const rfc = document.getElementById('rfc');
 const rctx = rfc.getContext('2d');
@@ -803,7 +962,6 @@ function drawRF() {
   const W=rfc.width,H=rfc.height;
   rctx.fillStyle='#040c12'; rctx.fillRect(0,0,W,H);
 
-  // grid
   rctx.strokeStyle='rgba(0,229,255,0.04)'; rctx.lineWidth=0.5;
   for(let i=1;i<4;i++){rctx.beginPath();rctx.moveTo(0,H*i/4);rctx.lineTo(W,H*i/4);rctx.stroke();}
 
@@ -826,8 +984,6 @@ function drawRF() {
 
 function triggerAmb() {
   if (emgActive) return;
-
-  // Pick a random approach direction for ambulance
   const dirs = ['N','S','E','W'];
   emgDir = dirs[Math.floor(Math.random()*4)];
 
@@ -835,22 +991,21 @@ function triggerAmb() {
   totalEmg++;
   spawnCar(emgDir, true);
 
-  // Signal: only emgDir goes green, all others red
   autoMode=false;
-  phase='NS_yellow'; // neutral state so phaseColor delegates to emgActive branch
+  phase='NS_yellow';
   countdown=20; maxDur=20;
 
   document.getElementById('detb').classList.add('on');
   document.getElementById('dettxt').textContent='AMBULANCE — 434.000 MHz DETECTED';
   document.getElementById('obanner').style.display='block';
-  document.getElementById('obanner').textContent='⚠ EMERGENCY: ' + emgDir + '-APPROACH GREEN — OTHERS RED';
+  document.getElementById('obanner').textContent='⚠ EMERGENCY: ' + emgDir + '-APPROACH GREEN';
   document.getElementById('simbtn').disabled=true;
   document.getElementById('sc-emg').textContent=totalEmg;
   updateSignalUI();
 
   addLog('RF +18.4 dB @ 434.000 MHz','alert');
   addLog('Ambulance detected — '+emgDir+' approach','alert');
-  addLog('Signal: '+emgDir+' → GREEN | N/S/E/W others → RED','warn');
+  addLog('Signal: '+emgDir+' → GREEN | others → RED','warn');
 
   if (emgTimeout) clearTimeout(emgTimeout);
   emgTimeout = setTimeout(()=>{
@@ -860,19 +1015,18 @@ function triggerAmb() {
     document.getElementById('obanner').style.display='none';
     document.getElementById('simbtn').disabled=false;
 
-    // Resume normal auto from NS_green
     autoMode=true;
     phase='NS_green'; phaseIdx=0;
     countdown=DUR.green; maxDur=DUR.green;
     document.getElementById('btn-auto').classList.add('active');
-    ['NS','EW','all-red'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
+    ['NS','EW','allred'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
     updateSignalUI();
     addLog('Emergency cleared — AUTO cycle resumed','ok');
   }, 10000);
 }
 
 // ═══════════════════════════════════════════════════
-// HISTORY CHARTS  (lightweight canvas line charts)
+// HISTORY CHARTS
 // ═══════════════════════════════════════════════════
 let h1=new Array(HIST).fill(0), h2=new Array(HIST).fill(0), h3=new Array(HIST).fill(0);
 
@@ -886,17 +1040,14 @@ function lineChart(id, data, col) {
   const max=Math.max(...data,1);
   const pts=data.map((v,i)=>[i/(HIST-1)*W, H-4-(v/max)*(H-10)]);
   ct.clearRect(0,0,W,H);
-  // fill
   ct.beginPath(); ct.moveTo(pts[0][0],H);
   pts.forEach(p=>ct.lineTo(p[0],p[1]));
   ct.lineTo(pts[pts.length-1][0],H); ct.closePath();
   const g=ct.createLinearGradient(0,0,0,H);
   g.addColorStop(0,col+'33'); g.addColorStop(1,'transparent');
   ct.fillStyle=g; ct.fill();
-  // line
   ct.beginPath(); pts.forEach((p,i)=>i===0?ct.moveTo(p[0],p[1]):ct.lineTo(p[0],p[1]));
   ct.strokeStyle=col; ct.lineWidth=1.4; ct.stroke();
-  // latest
   ct.fillStyle=col; ct.font='9px Share Tech Mono'; ct.textAlign='right';
   ct.fillText(data[data.length-1].toFixed(0), W-3, 11);
 }
@@ -919,16 +1070,14 @@ function addLog(msg, type='info') {
 setInterval(()=>{ document.getElementById('clk').textContent=new Date().toTimeString().slice(0,8); },1000);
 
 // ═══════════════════════════════════════════════════
-// MAIN LOOP  (rAF – throttled heavy ops)
+// MAIN LOOP
 // ═══════════════════════════════════════════════════
 function loop() {
   updateCars();
   render();
 
-  // RF every 2nd frame
   if (frame%2===0) drawRF();
 
-  // Stats every 60 frames (~1s)
   if (frame%60===0) {
     const wt = cars.length>0
       ? Math.round(cars.reduce((s,c)=>s+c.waitTicks,0)/cars.length/60)
@@ -951,14 +1100,17 @@ function loop() {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-window.addEventListener('resize',()=>{ resize(); roadDirty=true; });
 resize();
+
+// Set initial mobile state
+if (isMobile()) {
+  switchTab('map');
+}
 
 addLog('ATMS v2.5 initialized','ok');
 addLog('RTL-SDR dongle @ 2.4 MSPS','info');
 addLog('4-phase signal controller started','ok');
 
-// Initial burst
 setTimeout(()=>{
   ['N','S','E','W'].forEach(d=>spawnCar(d,false));
   ['N','S'].forEach(d=>spawnCar(d,false));
