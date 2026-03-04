@@ -125,6 +125,22 @@ The following deficiencies present in the original prototype have been corrected
 
 ---
 
+# How to Use the ITMS Simulation 
+
+---
+
+- To use this Intelligent Traffic Management System (ITMS) simulation, execute the main() function. The system will first initialize the traffic intersection and begin a normal, alternating four-way traffic cycle. You will see the current traffic light states printed in your output.
+
+- You will then be presented with a menu. To simulate an ambulance emergency, select option 1. To exit the program, choose option 2.
+
+- Selecting option 1 will prompt you to simulate an ambulance's RF broadcast by pressing Enter. The system will then ask you to confirm if a signal was detected (respond 'yes' or 'no'). If confirmed, you'll choose the ambulance's direction (North, South, East, or West) by entering a corresponding number. The traffic lights will then switch to an all-red safety pause, followed by a green light for the ambulance's direction.
+
+- After the ambulance lane turns green, you'll be asked to press Enter once the ambulance has cleared the intersection. If no input is received within 120 seconds, the system will automatically resume normal operation. Upon clearance (manual or timed), the ambulance lane's green light will transition through yellow to red, and the system will return to its regular traffic cycle.
+
+- You can initiate a clean shutdown at any time by selecting option 2 from the main menu or by pressing Ctrl+C (KeyboardInterrupt). The system ensures all lights turn red before terminating.
+
+---
+
 ## Authors
 
 Developed as part of an academic project under the subject domain of Automated Transportation Systems.
@@ -133,4 +149,4 @@ Developed as part of an academic project under the subject domain of Automated T
 
 ## License
 
-This project is released for academic and non-commercial use only. Refer to the LICENSE file for complete terms.
+This project is released for academic and non-commercial use only. Project maintained and developed by Mihir Panchal.
